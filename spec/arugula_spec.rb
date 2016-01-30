@@ -27,6 +27,7 @@ describe Arugula do
     '[()\\[\\].-]\\.' => 'hi',
     'foo[a-z]?' => 'food?',
     'a(b)?c' => 'factual',
+    'a(b)?c(d)?' => 'ab acd',
   }.each do |pattern, string|
     ruby_pattern = "/#{pattern}/"
 

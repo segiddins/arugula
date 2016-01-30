@@ -12,6 +12,12 @@ class Arugula
       @captures[name] = start_index...end_index
     end
 
+    def reset_captures!
+      @captures.keys.each do |key|
+        @captures[key] = nil
+      end
+    end
+
     attr_accessor :start_index
     attr_accessor :end_index
 

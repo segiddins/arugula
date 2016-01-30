@@ -19,6 +19,7 @@ class Arugula
   def match(str, index = 0)
     match_data = MatchData.new(self, str)
     loop do
+      match_data.reset_captures!
       match, end_index = @root.match(str, index, match_data)
       if match
         match_data.start_index = index
