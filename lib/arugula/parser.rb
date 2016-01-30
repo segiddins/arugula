@@ -6,6 +6,7 @@ class Arugula
     def initialize(str)
       @pattern = str.dup
       @states = [AndPart.new]
+      @captures = []
     end
 
     def state
@@ -14,13 +15,13 @@ class Arugula
 
     def parse!
       consume until pattern.empty?
-      @states.first
+      [@states.first, @captures]
     end
 
     Part.all.each do |part|
       type = part.type
       define_method(:"#{type}_type?") do
-        state && state.class.type == type
+        return true if state && state.class.type == type
       end
     end
 
@@ -56,6 +57,15 @@ class Arugula
         end
       elsif characterclass_type?
         push_part(:literal, tok)
+      elsif tok == '('
+        push_capture
+      elsif tok == ')'
+        pop_part until capture_type?
+        pop_part
+      elsif tok == '|'
+        pop_part until state == @states.first || or_type? || capture_type?
+        wrap_state(:or) unless or_type?
+        push_part(:and)
       elsif tok == '.'
         push_part(:dot)
       elsif tok == '*'
@@ -84,6 +94,12 @@ class Arugula
     def pop_part
       @states.pop until @states.last.respond_to?(:parts)
       @states.pop
+    end
+
+    def push_capture
+      push_part(:capture, @captures.size.succ.to_s)
+      @captures << state
+      push_part(:and)
     end
   end
 end

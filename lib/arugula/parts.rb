@@ -24,29 +24,31 @@ class Arugula
       literal.gsub('\\', '\\\\')
     end
 
-    def match(str, index)
+    def match(str, index, match_data)
       length = literal.size
       matches = str[index, length] == literal
       [matches, index + (matches ? length : 0)]
     end
   end
 
-  class AndPart < Part
+  module MatchAll
     attr_accessor :parts
     def initialize
       @parts = []
     end
-
-    def to_s
-      parts.join
-    end
-
-    def match(str, index)
+    def match(str, index, match_data)
       parts.each do |part|
-        match, index = part.match(str, index)
+        match, index = part.match(str, index, match_data)
         return false, index unless match
       end
       [true, index]
+    end
+  end
+
+  class AndPart < Part
+    include MatchAll
+    def to_s
+      parts.join
     end
   end
 
@@ -56,9 +58,9 @@ class Arugula
       @parts = []
     end
 
-    def match(str, index)
+    def match(str, index, match_data)
       parts.each do |part|
-        match, match_index = part.match(str, index)
+        match, match_index = part.match(str, index, match_data)
         return true, match_index if match
       end
       [false, index]
@@ -67,6 +69,10 @@ class Arugula
 
   class OrPart < Part
     include MatchAny
+    def initialize(*parts)
+      super()
+      @parts += parts
+    end
     def to_s
       parts.join '|'
     end
@@ -88,7 +94,7 @@ class Arugula
       "#{@range.begin}-#{@range.end}"
     end
 
-    def match(str, index)
+    def match(str, index, match_data)
       matches = @range.member?(str[index])
       [matches, index + (matches ? 1 : 0)]
     end
@@ -114,8 +120,9 @@ class Arugula
       @metachar = metachar.to_sym
     end
 
-    def match(str, index)
-      [MATCHERS[@metachar][str, index], index + OFFSETS[@metachar]]
+    def match(str, index, match_data)
+      matches = MATCHERS[@metachar][str, index]
+      [matches, index + (matches ? OFFSETS[@metachar] : 0)]
     end
 
     def to_s
@@ -123,14 +130,23 @@ class Arugula
     end
   end
 
-  class MatchPart < Part
-    attr_accessor :parts
-    def initialize
-      @parts = AndPart.new
+  class CapturePart < Part
+    include MatchAll
+    attr_reader :name
+
+    def initialize(name)
+      @name = name
+      super()
     end
 
     def to_s
       "(#{parts.join})"
+    end
+
+    def match(str, index, match_data)
+      matches, end_index = super
+      match_data.add_capture(@name, index, end_index) if matches
+      [matches, end_index]
     end
   end
 
@@ -139,7 +155,7 @@ class Arugula
       '$'
     end
 
-    def match(str, index)
+    def match(str, index, match_data)
       matches = str[index] == "\n" || index == str.size
       return true, index if matches
       [false, index]
@@ -150,7 +166,7 @@ class Arugula
       '^'
     end
 
-    def match(str, index)
+    def match(str, index, match_data)
       matches = (index == 0) || (str[index - 1] == "\n")
       [matches, index]
     end
@@ -169,9 +185,9 @@ class Arugula
       "#{wrapped}*"
     end
 
-    def match(str, index)
+    def match(str, index, match_data)
       loop do
-        matches, index = wrapped.match(str, index)
+        matches, index = wrapped.match(str, index, match_data)
         return true, index unless matches
       end
     end
@@ -183,10 +199,10 @@ class Arugula
       "#{wrapped}+"
     end
 
-    def match(str, index)
+    def match(str, index, match_data)
       has_matched = false
       loop do
-        matches, index = wrapped.match(str, index)
+        matches, index = wrapped.match(str, index, match_data)
         has_matched = true if matches
         return has_matched, index unless matches
       end
@@ -198,7 +214,7 @@ class Arugula
       '.'
     end
 
-    def match(str, index)
+    def match(str, index, match_data)
       matches = index < str.size
       [matches, index + (matches ? 1 : 0)]
     end

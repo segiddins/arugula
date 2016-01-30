@@ -16,6 +16,12 @@ describe Arugula do
     '[a-z]' => 'AfG',
     '[A-Z].+' => 'my name is Samuel Giddins',
     '[e-gE-G]' => 'cow is GREAT',
+    'Hello ([a-z]+)!' => 'Hello world!',
+    'a(b(b*))c' => '1ab2abbbc',
+    '(\d+),(\d+),(\d+)' => '1,20,3',
+    'foo|bar|baz' => 'foo',
+    '(foo|bar|baz)' => 'fubar-ed',
+    'this is (\d+|not)' => 'this is 10pm'
   }.each do |pattern, string|
     ruby_pattern = "/#{pattern}/"
 
@@ -30,8 +36,16 @@ describe Arugula do
       end
 
       context 'when matching a string' do
-        it 'does the same this as ::Regexp' do
+        it 'does the same thing as ::Regexp' do
           expect(subject.match?(string)).to eq(regexp =~ string)
+        end
+
+        it 'returns the correct match data' do
+          match = subject.match(string)
+          expected = regexp.match(string)
+          expect(match.to_a).to eq(expected.to_a)
+          expect(match.to_s).to eq(expected.to_s)
+          expect(match.inspect).to eq(expected.inspect)
         end
       end
     end
