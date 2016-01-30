@@ -85,4 +85,26 @@ describe Arugula do
     expect(Arugula.new('.').match("\n")).to be_nil
     expect(Arugula.new('.').match("\0").to_a).to eq ["\0"]
   end
+
+  it 'support quoting meta-characters via escape sequence' do
+    expect(Arugula.new('\\\\').match('\\').to_a).to eq ['\\']
+    expect(Arugula.new('\/').match('/').to_a).to eq ['/']
+    # parenthesis, etc
+    expect(Arugula.new('\(').match('(').to_a).to eq ['(']
+    expect(Arugula.new('\)').match(')').to_a).to eq [')']
+    expect(Arugula.new('\[').match('[').to_a).to eq ['[']
+    expect(Arugula.new('\]').match(']').to_a).to eq [']']
+    expect(Arugula.new('\{').match('{').to_a).to eq ['{']
+    expect(Arugula.new('\}').match('}').to_a).to eq ['}']
+    # alternation separator
+    expect(Arugula.new('\|').match('|').to_a).to eq ['|']
+    # quantifiers
+    expect(Arugula.new('\?').match('?').to_a).to eq ['?']
+    expect(Arugula.new('\.').match('.').to_a).to eq ['.']
+    expect(Arugula.new('\*').match('*').to_a).to eq ['*']
+    expect(Arugula.new('\+').match('+').to_a).to eq ['+']
+    # line anchors
+    expect(Arugula.new('\^').match('^').to_a).to eq ['^']
+    expect(Arugula.new('\$').match('$').to_a).to eq ['$']
+  end
 end
