@@ -30,7 +30,7 @@ class Arugula
       peek = pattern.chr
       if tok.nil?
         fail 'shouldnt happen'
-      elsif tok == '['
+      elsif tok == '[' && !characterclass_type?
         push_part(:characterclass)
       elsif tok == '-' &&
             characterclass_type? &&
@@ -72,6 +72,8 @@ class Arugula
         wrap_state(:star)
       elsif tok == '+'
         wrap_state(:plus)
+      elsif tok == '?'
+        wrap_state(:question)
       else
         push_part(:literal, tok)
       end

@@ -22,6 +22,11 @@ describe Arugula do
     'foo|bar|baz' => 'foo',
     '(foo|bar|baz)' => 'fubar-ed',
     'this is (\d+|not)' => 'this is 10pm',
+    '.' => '',
+    '' => 'I like pizza.',
+    '[()\\[\\].-]\\.' => 'hi',
+    'foo[a-z]?' => 'food?',
+    'a(b)?c' => 'factual',
   }.each do |pattern, string|
     ruby_pattern = "/#{pattern}/"
 

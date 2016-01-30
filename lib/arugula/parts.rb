@@ -21,7 +21,7 @@ class Arugula
     end
 
     def to_s
-      literal.gsub('\\', '\\\\')
+      literal.gsub('\\', '\\\\').gsub(/[.]/) { |m| "\\#{m}" }
     end
 
     def match(str, index, _match_data)
@@ -83,7 +83,14 @@ class Arugula
   class CharacterClassPart < Part
     include MatchAny
     def to_s
-      "[#{parts.join}]"
+      parts_string = parts.map do |part|
+        next part unless part.class.type == :literal
+        lit = part.literal
+        lit = '\\]' if lit == ']'
+        lit = '\\[' if lit == '['
+        lit
+      end.join
+      "[#{parts_string}]"
     end
   end
 
@@ -208,6 +215,18 @@ class Arugula
         has_matched = true if matches
         return has_matched, index unless matches
       end
+    end
+  end
+
+  class QuestionPart < Part
+    include Wrapping
+    def to_s
+      "#{wrapped}?"
+    end
+
+    def match(str, index, match_data)
+      _matches, index = wrapped.match(str, index, match_data)
+      [true, index]
     end
   end
 

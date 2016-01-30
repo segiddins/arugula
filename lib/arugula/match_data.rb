@@ -21,18 +21,24 @@ class Arugula
 
     def inspect
       captures_part = @captures.map do |name, range|
-        " #{name}:#{@string[range].dump}"
+        " #{name}:#{dump_str(range && @string[range])}"
       end.join
-      "#<MatchData #{to_s.dump}#{captures_part}>"
+      "#<MatchData #{dump_str(to_s)}#{captures_part}>"
     end
 
     def to_a
-      @captures.map { |_name, range| @string[range] }.unshift(to_s)
+      @captures.map { |_name, range| range && @string[range] }.unshift(to_s)
     end
 
     def freeze
       @captures.freeze
       super
+    end
+
+    private
+
+    def dump_str(str)
+      str.nil? ? 'nil' : str.dump
     end
   end
 end
