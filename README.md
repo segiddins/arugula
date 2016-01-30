@@ -25,6 +25,9 @@ Or install it yourself as:
 regexp = Arugula.new('[A-Z][a-z]+')
 regexp.match?('ahoy! my name is Samuel') # => 17
 regexp.match?('foobar') # => null
+
+regexp = Arugula.new('Hello ([a-z]+)!')
+regexp.match('Hello world!') # => #<MatchData "Hello world!" 1:"world">
 ```
 
 ## Development
