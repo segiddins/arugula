@@ -30,8 +30,8 @@ class Arugula
     end
 
     def freeze
-      super
       @captures.freeze
+      super
     end
   end
 end
