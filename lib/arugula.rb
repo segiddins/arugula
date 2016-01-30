@@ -8,8 +8,7 @@ class Arugula
     @root = Parser.new(pattern).parse!
   end
 
-  def match?(str)
-    index = 0
+  def match?(str, index = 0)
     loop do
       match, = @root.match(str, index)
       return index if match

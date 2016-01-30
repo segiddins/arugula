@@ -20,7 +20,7 @@ describe Arugula do
     ruby_pattern = "/#{pattern}/"
 
     context "#{string.dump} =~ #{ruby_pattern}" do
-      subject { Arugula.new(pattern) }
+      subject { described_class.new(pattern) }
       let(:regexp) { Regexp.new(pattern) }
 
       describe '#to_s' do
@@ -34,6 +34,19 @@ describe Arugula do
           expect(subject.match?(string)).to eq(regexp =~ string)
         end
       end
+    end
+  end
+
+  context 'when matching from a starting offset' do
+    let(:pattern) { 'ab' }
+    subject { described_class.new(pattern) }
+
+    it "doesn't match when the match is before the passed in position" do
+      expect(subject.match?('abcd', 2)).to be_nil
+    end
+
+    it 'returns the match index' do
+      expect(subject.match?('ababababab', 3)).to eq(4)
     end
   end
 end
