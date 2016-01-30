@@ -271,7 +271,8 @@ class Arugula
     end
 
     def match(str, index, _match_data)
-      matches = index < str.size
+      char = str[index]
+      matches = char && char != "\n"
       [matches, index + (matches ? 1 : 0)]
     end
   end

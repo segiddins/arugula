@@ -71,4 +71,13 @@ describe Arugula do
       expect(subject.match?('ababababab', 3)).to eq(4)
     end
   end
+
+  it 'supports . (any character except line terminator)' do
+    # Basic matching
+    expect(Arugula.new('.').match('foo').to_a).to eq ['f']
+    # Basic non-matching
+    expect(Arugula.new('.').match('')).to be_nil
+    expect(Arugula.new('.').match("\n")).to be_nil
+    expect(Arugula.new('.').match("\0").to_a).to eq ["\0"]
+  end
 end
