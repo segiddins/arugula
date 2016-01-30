@@ -141,7 +141,7 @@ class Arugula
 
     def match(str, index)
       matches = str[index] == "\n" || index == str.size
-      return true, index + 1 if matches
+      return true, index if matches
       [false, index]
     end
   end
