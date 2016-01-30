@@ -30,6 +30,11 @@ describe Arugula do
     'a(b)?c(d)?' => 'ab acd',
     'a{2}b{,4}c{3,}d{6,8}' => 'a' * 2 + 'b' * 3 + 'c' * 4 + 'd' * 7,
     'fo{1,3}?d' => 'I like eating food',
+    '.([0-9]){3,5}?foo' => '9876543210foo',
+    # '<.*>' => '<a>foo</a>',
+    # '<.+>' => '<a>foo</a>',
+    # '<.{1,}>' => '<a>foo</a>',
+    # 'foo(A{,1}+)Abar' => 'fooAAAbar',
   }.each do |pattern, string|
     ruby_pattern = "/#{pattern}/"
 
