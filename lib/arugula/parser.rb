@@ -41,6 +41,10 @@ class Arugula
         pattern.slice!(0)
       elsif tok == ']' && characterclass_type?
         pop_part
+      elsif tok == '^' && characterclass_type? && state.parts.empty?
+        characterclass_part = pop_part
+        wrap_state(:not)
+        @states << characterclass_part
       elsif tok == '$'
         push_part(:eol)
       elsif tok == '^'

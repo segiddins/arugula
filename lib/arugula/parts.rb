@@ -61,8 +61,8 @@ class Arugula
 
     def match(str, index, match_data)
       parts.each do |part|
-        match, match_index = part.match(str, index, match_data)
-        return true, match_index if match
+        matches, match_index = part.match(str, index, match_data)
+        return true, match_index if matches
       end
       [false, index]
     end
@@ -188,6 +188,19 @@ class Arugula
     attr_reader :wrapped
     def initialize(wrapped)
       @wrapped = wrapped
+    end
+  end
+
+  class NotPart < Part
+    include Wrapping
+
+    def to_s
+      @wrapped.to_s.dup.insert(1, '^')
+    end
+
+    def match(str, index, match_data)
+      matches, end_index = wrapped.match(str, index, match_data)
+      [!matches, matches ? index : end_index + 1]
     end
   end
 

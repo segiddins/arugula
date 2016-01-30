@@ -35,6 +35,7 @@ describe Arugula do
     '(foo\Z)' => "bar foo\n\n",
     '(food\Z)' => "bar food\n",
     '(foody\Z)' => 'bar foody',
+    '[^abc]' => 'abcd',
     # '<.*>' => '<a>foo</a>',
     # '<.+>' => '<a>foo</a>',
     # '<.{1,}>' => '<a>foo</a>',
