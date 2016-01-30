@@ -115,13 +115,16 @@ class Arugula
       d: ->(str, index) { ('0'..'9').member?(str[index]) },
       s: ->(str, index) { [' ', "\t"].include?(str[index]) },
       S: ->(str, index) { ![' ', "\t"].include?(str[index]) },
+      z: ->(str, index) { index == str.size },
+      Z: ->(str, index) { str[index..-1] == "\n" || index == str.size },
     }.freeze
 
     OFFSETS = begin
       offsets = {
-        A: 0,
+        A: ->(_str, _index) { 0 },
+        Z: ->(str, index) { index == str.size ? 1 : 0 },
       }
-      offsets.default = 1
+      offsets.default = ->(_str, _index) { 1 }
       offsets.freeze
     end
 
@@ -131,7 +134,7 @@ class Arugula
 
     def match(str, index, _match_data)
       matches = MATCHERS[@metachar][str, index]
-      [matches, index + (matches ? OFFSETS[@metachar] : 0)]
+      [matches, index + (matches ? OFFSETS[@metachar][str, index] : 0)]
     end
 
     def to_s
