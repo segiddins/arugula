@@ -24,7 +24,7 @@ class Arugula
       literal.gsub('\\', '\\\\')
     end
 
-    def match(str, index, match_data)
+    def match(str, index, _match_data)
       length = literal.size
       matches = str[index, length] == literal
       [matches, index + (matches ? length : 0)]
@@ -36,6 +36,7 @@ class Arugula
     def initialize
       @parts = []
     end
+
     def match(str, index, match_data)
       parts.each do |part|
         match, index = part.match(str, index, match_data)
@@ -73,6 +74,7 @@ class Arugula
       super()
       @parts += parts
     end
+
     def to_s
       parts.join '|'
     end
@@ -94,7 +96,7 @@ class Arugula
       "#{@range.begin}-#{@range.end}"
     end
 
-    def match(str, index, match_data)
+    def match(str, index, _match_data)
       matches = @range.member?(str[index])
       [matches, index + (matches ? 1 : 0)]
     end
@@ -120,7 +122,7 @@ class Arugula
       @metachar = metachar.to_sym
     end
 
-    def match(str, index, match_data)
+    def match(str, index, _match_data)
       matches = MATCHERS[@metachar][str, index]
       [matches, index + (matches ? OFFSETS[@metachar] : 0)]
     end
@@ -155,7 +157,7 @@ class Arugula
       '$'
     end
 
-    def match(str, index, match_data)
+    def match(str, index, _match_data)
       matches = str[index] == "\n" || index == str.size
       return true, index if matches
       [false, index]
@@ -166,7 +168,7 @@ class Arugula
       '^'
     end
 
-    def match(str, index, match_data)
+    def match(str, index, _match_data)
       matches = (index == 0) || (str[index - 1] == "\n")
       [matches, index]
     end
@@ -214,7 +216,7 @@ class Arugula
       '.'
     end
 
-    def match(str, index, match_data)
+    def match(str, index, _match_data)
       matches = index < str.size
       [matches, index + (matches ? 1 : 0)]
     end

@@ -5,7 +5,7 @@ class Arugula
       # ap regexp, raw: true
       @regexp = regexp
       @string = string.dup.freeze
-      @captures = Hash[regexp.captures.map {|c| [c.name, nil] }]
+      @captures = Hash[regexp.captures.map { |c| [c.name, nil] }]
     end
 
     def add_capture(name, start_index, end_index)
@@ -20,13 +20,14 @@ class Arugula
     end
 
     def inspect
-      captures_part = @captures.
-        map {|name, range| " #{name}:#{@string[range].dump}"}.join
+      captures_part = @captures.map do |name, range|
+        " #{name}:#{@string[range].dump}"
+      end.join
       "#<MatchData #{to_s.dump}#{captures_part}>"
     end
 
     def to_a
-      @captures.map {|name, range| @string[range] }.unshift(to_s)
+      @captures.map { |_name, range| @string[range] }.unshift(to_s)
     end
 
     def freeze
