@@ -2,7 +2,7 @@ require 'spec_helper'
 
 describe Arugula do
   it 'has a version number' do
-    expect(Arugula::VERSION).not_to be_nil
+    expect(Arugula::VERSION).to match(Gem::Version::ANCHORED_VERSION_PATTERN)
   end
 
   {
