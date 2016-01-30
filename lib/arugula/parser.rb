@@ -74,6 +74,22 @@ class Arugula
         wrap_state(:plus)
       elsif tok == '?'
         wrap_state(:question)
+      elsif tok == '{'
+        before_comma = ''
+        after_comma = ''
+        until pattern.chr == ',' || pattern.chr == '}'
+          before_comma << pattern.slice!(0)
+        end
+        if pattern.chr == ','
+          pattern.slice!(0)
+        else
+          after_comma = before_comma
+        end
+        after_comma << pattern.slice!(0) until pattern.chr == '}'
+        pattern.slice!(0) if pattern.chr == '}'
+        before = before_comma.empty? ? 0 : before_comma.to_i
+        after = after_comma.empty? ? Float::INFINITY : after_comma.to_i
+        wrap_state(:quantifier, before, after)
       else
         push_part(:literal, tok)
       end
@@ -87,8 +103,9 @@ class Arugula
       @states << part unless name == :literal
     end
 
-    def wrap_state(name)
-      wrapped = Part.all.find { |p| p.type == name }.new(state.parts.pop)
+    def wrap_state(name, *content)
+      wrapped = Part.all.find { |p| p.type == name }
+                    .new(*content, state.parts.pop)
       state.parts << wrapped
       @states << wrapped
     end

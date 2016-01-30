@@ -28,6 +28,8 @@ describe Arugula do
     'foo[a-z]?' => 'food?',
     'a(b)?c' => 'factual',
     'a(b)?c(d)?' => 'ab acd',
+    'a{2}b{,4}c{3,}d{6,8}' => 'a' * 2 + 'b' * 3 + 'c' * 4 + 'd' * 7,
+    'fo{1,3}?d' => 'I like eating food',
   }.each do |pattern, string|
     ruby_pattern = "/#{pattern}/"
 

@@ -188,45 +188,80 @@ class Arugula
     end
   end
 
-  class StarPart < Part
+  module MatchNTimes
     include Wrapping
-    def to_s
-      "#{wrapped}*"
+    def initialize(*args, times: 1..1)
+      @times = times
+      super(*args)
     end
 
     def match(str, index, match_data)
+      match_count = 0
+      end_index = index
+
       loop do
         matches, index = wrapped.match(str, index, match_data)
-        return true, index unless matches
+        if matches
+          end_index = index
+          match_count += 1
+        end
+        break if !matches || match_count > @times.end
       end
+
+      matches = @times.member?(match_count)
+      [matches, matches ? end_index : index]
+    end
+  end
+
+  class StarPart < Part
+    include MatchNTimes
+    def initialize(*args)
+      super(*args, times: 0..Float::INFINITY)
+    end
+
+    def to_s
+      "#{wrapped}*"
     end
   end
 
   class PlusPart < Part
-    include Wrapping
-    def to_s
-      "#{wrapped}+"
+    include MatchNTimes
+    def initialize(*args)
+      super(*args, times: 1..Float::INFINITY)
     end
 
-    def match(str, index, match_data)
-      has_matched = false
-      loop do
-        matches, index = wrapped.match(str, index, match_data)
-        has_matched = true if matches
-        return has_matched, index unless matches
-      end
+    def to_s
+      "#{wrapped}+"
     end
   end
 
   class QuestionPart < Part
-    include Wrapping
+    include MatchNTimes
+    def initialize(*args)
+      super(*args, times: 0..1)
+    end
+
     def to_s
       "#{wrapped}?"
     end
+  end
 
-    def match(str, index, match_data)
-      _matches, index = wrapped.match(str, index, match_data)
-      [true, index]
+  class QuantifierPart < Part
+    include MatchNTimes
+    def initialize(before, after, *args)
+      super(*args, times: before..after)
+    end
+
+    def to_s
+      before = @times.begin
+      after = @times.end
+      quantifier_part = '{'.dup
+      quantifier_part << before.to_s unless before == 0
+      quantifier_part << ',' unless before == after
+      quantifier_part << after.to_s unless before == after ||
+                                           after == Float::INFINITY
+      quantifier_part << '}'
+      "#{wrapped}#{quantifier_part}"
     end
   end
 
