@@ -34,4 +34,15 @@ class Arugula
   def to_s
     "/#{@root}/"
   end
+
+  alias inspect to_s
+
+  def hash
+    to_s.hash
+  end
+
+  def ==(other)
+    return false unless other.is_a?(Arugula) || other.is_a?(Regexp)
+    inspect == other.inspect
+  end
 end

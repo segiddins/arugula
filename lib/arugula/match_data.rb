@@ -1,5 +1,6 @@
 class Arugula
   class MatchData
+    attr_reader :string, :regexp
     def initialize(regexp, string)
       # require "awesome_print"
       # ap regexp, raw: true
@@ -33,12 +34,42 @@ class Arugula
     end
 
     def to_a
-      @captures.map { |_name, range| range && @string[range] }.unshift(to_s)
+      captures.unshift(to_s)
+    end
+
+    def size
+      @captures.size + 1
+    end
+    alias length size
+
+    def captures
+      @captures.map { |_name, range| range && @string[range] }
+    end
+
+    def pre_match
+      return '' if start_index == 0
+      @string[0...start_index]
+    end
+
+    def post_match
+      return '' if end_index == string.size
+      @string[end_index..-1]
     end
 
     def freeze
       @captures.freeze
       super
+    end
+
+    def hash
+      @string.hash ^ @regexp.hash ^ @captures.hash
+    end
+
+    def ==(other)
+      return false unless other.is_a?(MatchData) || other.is_a?(::MatchData)
+      string == other.string &&
+        regexp == other.regexp &&
+        captures == other.captures
     end
 
     private

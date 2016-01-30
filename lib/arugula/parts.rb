@@ -122,7 +122,8 @@ class Arugula
     OFFSETS = begin
       offsets = {
         A: ->(_str, _index) { 0 },
-        Z: ->(str, index) { index == str.size ? 1 : 0 },
+        Z: ->(_str, _index) { 0 },
+        z: ->(_str, _index) { 0 },
       }
       offsets.default = ->(_str, _index) { 1 }
       offsets.freeze

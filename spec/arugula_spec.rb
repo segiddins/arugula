@@ -42,10 +42,17 @@ describe Arugula do
     # 'foo(A{,1}+)Abar' => 'fooAAAbar',
   }.each do |pattern, string|
     ruby_pattern = "/#{pattern}/"
+    match_data_methods = %i(
+      itself
+      to_a to_s inspect post_match pre_match
+      captures length size string regexp
+    )
+    regexp = Regexp.new(pattern)
+    expected_match = regexp.match(string)
 
     context "#{string.dump} =~ #{ruby_pattern}" do
       subject { described_class.new(pattern) }
-      let(:regexp) { Regexp.new(pattern) }
+      let(:match) { subject.match(string) }
 
       describe '#to_s' do
         it 'returns the original pattern' do
@@ -58,13 +65,15 @@ describe Arugula do
           expect(subject.match?(string)).to eq(regexp =~ string)
         end
 
-        it 'returns the correct match data' do
-          match = subject.match(string)
-          expected = regexp.match(string)
-          expect(match.to_a).to eq(expected.to_a)
-          expect(match.to_s).to eq(expected.to_s)
-          expect(match.inspect).to eq(expected.inspect)
+        it 'returns the same MatchData as ::Regexp' do
+          expect(match).to eq(expected_match)
         end
+
+        match_data_methods.each do |m|
+          it "returns the correct value for #{m}" do
+            expect(match.send(m)).to eq(expected_match.send(m))
+          end
+        end unless expected_match.nil?
       end
     end
   end
