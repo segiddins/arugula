@@ -1,7 +1,7 @@
 PATH
   remote: .
   specs:
-    arugula (0.2.1)
+    arugula (0.3.0)
 
 GEM
   remote: https://rubygems.org/
