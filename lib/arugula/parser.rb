@@ -49,16 +49,18 @@ class Arugula
         push_part(:eol)
       elsif tok == '^'
         push_part(:sol)
-      elsif tok == '\\'
-        tok = pattern.slice!(0)
-        case tok
+      elsif tok == "\\"
+        case peek
         when nil
           fail 'unterminated escape sequence'
         when *MetacharacterPart::MATCHERS.keys.map(&:to_s)
-          push_part(:metacharacter, tok)
+          push_part(:metacharacter, peek)
+        when *LiteralPart::SPECIAL_LITERALS_BY_REGEX.keys
+          push_part(:literal, LiteralPart::SPECIAL_LITERALS_BY_REGEX[peek])
         else
-          push_part(:literal, tok)
+          push_part(:literal, peek)
         end
+        pattern.slice!(0)
       elsif characterclass_type?
         push_part(:literal, tok)
       elsif tok == '('

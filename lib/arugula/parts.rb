@@ -20,8 +20,19 @@ class Arugula
       @literal = literal
     end
 
+    SPECIAL_LITERALS_BY_STRING = { 
+      "\n" => '\n', 
+      "\t" => '\t', 
+      '.' => '\.', 
+      '/' => '\/',
+      "\\" => "\\\\", 
+    }.freeze
+    SPECIAL_LITERALS_BY_STRING_UNION = Regexp.union(SPECIAL_LITERALS_BY_STRING.keys)
+    SPECIAL_LITERALS_BY_REGEX = SPECIAL_LITERALS_BY_STRING.invert.transform_keys { _1[1, 1] }.freeze
+
     def to_s
-      literal.gsub('\\', '\\\\').gsub(/[.]/) { |m| "\\#{m}" }
+      literal.
+        gsub(SPECIAL_LITERALS_BY_STRING_UNION, SPECIAL_LITERALS_BY_STRING)
     end
 
     def to_matcher_parts!(compiler)

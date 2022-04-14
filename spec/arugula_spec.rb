@@ -10,7 +10,8 @@ describe Arugula do
     'foo' => 'e-food',
     '[eat]' => 'hfkdshgfjds',
     '\\A\\de' => '5eat',
-    '^line$' => "before\nline\nafter",
+    '^line$' => ["before\nline\nafter", "\nline", "line\n", "\nline\n", "\nline\naline"],
+    'l1\nl2' => ["l1\nl2", "l1l2"],
     'a*bc*' => 'caaaaaaaab',
     'a+bc+' => 'caaaaaaaabcc',
     '[a-z]' => 'AfG',
@@ -37,8 +38,8 @@ describe Arugula do
     '(food\Z)' => "bar food\n",
     '(foody\Z)' => 'bar foody',
     '[^abc]' => 'abcd',
-    '<.*>' => '<a>foo</a>',
-    '<.+>' => '<a>foo</a>',
+    '<.*>' => ['<a>foo</a>', '<<a>>', '<><><', '<>'],
+    '<.+>' => ['<a>foo</a>', '<<a>>', '<><><', '<>'],
     'a(.*)>' => '<a>foo</a>',
     '<.{1,}>' => '<a>foo</a>',
     'foo(A{,1}+)Abar' => 'fooAAAbar',
@@ -46,7 +47,8 @@ describe Arugula do
     'foo(A{,1}+)Ab' => 'fooAAbar',
     '^.{2}*$' => '1212',
     '^.{3}*$' => '12312',
-  }.each do |pattern, string|
+    '\/' => '/',
+  }.each do |pattern, strings|
     ruby_pattern = "/#{pattern}/"
     match_data_methods = %i(
       itself
@@ -59,39 +61,41 @@ describe Arugula do
       begin end match match_length offset values_at
     )
     regexp = Regexp.new(pattern)
-    expected_match = regexp.match(string)
+    Array(strings).each do |string|
+      expected_match = regexp.match(string)
 
-    context "#{string.dump} =~ #{ruby_pattern}" do
-      subject { described_class.new(pattern) }
-      let(:match) { subject.match(string) }
+      context "#{string.dump} =~ #{ruby_pattern}" do
+        subject { described_class.new(pattern) }
+        let(:match) { subject.match(string) }
 
-      describe '#to_s' do
-        it 'returns the original pattern' do
-          expect(subject.to_s).to eq(ruby_pattern)
-        end
-      end
-
-      context 'when matching a string' do
-        it 'does the same thing as ::Regexp' do
-          expect(subject.match?(string)).to eq(regexp =~ string)
+        describe '#to_s' do
+          it 'returns the original pattern' do
+            expect(subject.to_s).to eq(ruby_pattern)
+          end
         end
 
-        it 'returns the same MatchData as ::Regexp' do
-          expect(match).to eq(expected_match)
-        end
-
-        unless expected_match.nil?
-          match_data_methods.each do |m|
-            it "returns the correct value for #{m}" do
-              expect(match.send(m)).to eq(expected_match.send(m))
-            end
+        context 'when matching a string' do
+          it 'does the same thing as ::Regexp' do
+            expect(subject.match?(string)).to eq(regexp =~ string)
           end
 
-          match_data_index_methods.each do |m|
-            describe "calling ##{m}" do
-              expected_match.size.times do |idx|
-                it "returns the correct value for .(#{idx.inspect})" do
-                  expect(match.send(m, idx)).to eq(expected_match.send(m, idx))
+          it 'returns the same MatchData as ::Regexp' do
+            expect(match).to eq(expected_match)
+          end
+
+          unless expected_match.nil?
+            match_data_methods.each do |m|
+              it "returns the correct value for #{m}" do
+                expect(match.send(m)).to eq(expected_match.send(m))
+              end
+            end
+
+            match_data_index_methods.each do |m|
+              describe "calling ##{m}" do
+                expected_match.size.times do |idx|
+                  it "returns the correct value for .(#{idx.inspect})" do
+                    expect(match.send(m, idx)).to eq(expected_match.send(m, idx))
+                  end
                 end
               end
             end
