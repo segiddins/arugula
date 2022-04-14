@@ -24,10 +24,15 @@ class Arugula
       literal.gsub('\\', '\\\\').gsub(/[.]/) { |m| "\\#{m}" }
     end
 
-    def match(str, index, _match_data)
-      length = literal.size
-      matches = str[index, length] == literal
-      [matches, index + (matches ? length : 0)]
+    def to_matcher_parts!(compiler)
+      compiler.automata!(self) do |state|
+        length = literal.size
+        if state.peek(length: length) == literal
+          state.advanced(length: length)
+        else
+          state.no_match
+        end
+      end
     end
   end
 
@@ -37,12 +42,8 @@ class Arugula
       @parts = []
     end
 
-    def match(str, index, match_data)
-      parts.each do |part|
-        match, index = part.match(str, index, match_data)
-        return false, index unless match
-      end
-      [true, index]
+    def to_matcher_parts!(compiler)
+      compiler.conjunction(parts)
     end
   end
 
@@ -59,13 +60,7 @@ class Arugula
       @parts = []
     end
 
-    def match(str, index, match_data)
-      parts.each do |part|
-        matches, match_index = part.match(str, index, match_data)
-        return true, match_index if matches
-      end
-      [false, index]
-    end
+    def to_matcher_parts!(compiler) = compiler.disjunction(parts)
   end
 
   class OrPart < Part
@@ -103,9 +98,14 @@ class Arugula
       "#{@range.begin}-#{@range.end}"
     end
 
-    def match(str, index, _match_data)
-      matches = @range.member?(str[index])
-      [matches, index + (matches ? 1 : 0)]
+    def to_matcher_parts!(compiler)
+      compiler.automata!(self) do |state|
+        if @range.member?(state.peek)
+          state.advanced
+        else
+          state.no_match
+        end
+      end
     end
   end
 
@@ -133,13 +133,29 @@ class Arugula
       @metachar = metachar.to_sym
     end
 
-    def match(str, index, _match_data)
-      matches = MATCHERS[@metachar][str, index]
-      [matches, index + (matches ? OFFSETS[@metachar][str, index] : 0)]
-    end
-
     def to_s
       "\\#{@metachar}"
+    end
+
+    def to_matcher_parts!(compiler)
+      compiler.automata!(self) do |state|
+        case @metachar
+        when :A
+          state.advanced(length: 0) if state.sos?
+        when :d
+          state.advanced if ('0'..'9').member?(state.peek)
+        when :s
+          raise
+        when :S
+          raise
+        when :z
+          state.advanced(length: 0) if state.eos?
+        when :Z
+          eos = state
+          eos = eos.advanced if eos.peek == "\n"
+          state.advanced(length: 0) if eos.eos?
+        end.yield_self { _1 || state.no_match }
+      end
     end
   end
 
@@ -156,10 +172,20 @@ class Arugula
       "(#{parts.join})"
     end
 
-    def match(str, index, match_data)
-      matches, end_index = super
-      match_data.add_capture(@name, index, end_index) if matches
-      [matches, end_index]
+    def to_matcher_parts!(compiler)
+      @parts.each do |part|
+        compiler.add_successor_from_current_to_next do
+          compiler.automata!("Start capture #{name}") { |state| state.advanced(in_capture: name, length: 0, reset_capture: true) }
+        end
+      
+        compiler.add_successor_from_current_to_next do
+          part.to_matcher_parts!(compiler)
+        end
+
+        compiler.add_successor_from_current_to_next do
+          compiler.automata!("End capture #{name}") { |state| state.match? ? state.advanced(in_capture: name, length: 0) : state }
+        end
+      end
     end
   end
 
@@ -168,10 +194,11 @@ class Arugula
       '$'
     end
 
-    def match(str, index, _match_data)
-      matches = str[index] == "\n" || index == str.size
-      return true, index if matches
-      [false, index]
+    def to_matcher_parts!(compiler)
+      compiler.automata!(self) do |state|
+        next state.advanced(length: 0) if state.eos? || state.peek == "\n"
+        state.no_match
+      end
     end
   end
   class SOLPart < Part
@@ -179,9 +206,11 @@ class Arugula
       '^'
     end
 
-    def match(str, index, _match_data)
-      matches = (index == 0) || (str[index - 1] == "\n")
-      [matches, index]
+    def to_matcher_parts!(compiler)
+      compiler.automata!(self) do |state|
+        next state.advanced(length: 0) if state.sos? || state.substring(-1) == "\n"
+        state.no_match
+      end
     end
   end
 
@@ -199,9 +228,8 @@ class Arugula
       @wrapped.to_s.dup.insert(1, '^')
     end
 
-    def match(str, index, match_data)
-      matches, end_index = wrapped.match(str, index, match_data)
-      [!matches, matches ? index : end_index + 1]
+    def to_matcher_parts!(compiler)
+      compiler.with_negation { wrapped.to_matcher_parts!(compiler) }
     end
   end
 
@@ -212,21 +240,8 @@ class Arugula
       super(*args)
     end
 
-    def match(str, index, match_data)
-      match_count = 0
-      end_index = index
-
-      loop do
-        matches, index = wrapped.match(str, index, match_data)
-        if matches
-          end_index = index
-          match_count += 1
-        end
-        break if !matches || match_count > @times.end
-      end
-
-      matches = @times.member?(match_count)
-      [matches, matches ? end_index : index]
+    def to_matcher_parts!(compiler)
+      compiler.repeated_range(wrapped, @times.begin, @times.end)
     end
   end
 
@@ -287,10 +302,8 @@ class Arugula
       '.'
     end
 
-    def match(str, index, _match_data)
-      char = str[index]
-      matches = char && char != "\n"
-      [matches, index + (matches ? 1 : 0)]
+    def to_matcher_parts!(compiler)
+      compiler.automata!(self) { _1.peek&.!=("\n") ? _1.advanced : _1.no_match }
     end
   end
 end

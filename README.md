@@ -13,11 +13,15 @@ gem 'arugula'
 
 And then execute:
 
-    $ bundle
+```sh
+bundle
+```
 
 Or install it yourself as:
 
-    $ gem install arugula
+```sh
+gem install arugula
+```
 
 ## Usage
 
@@ -47,7 +51,7 @@ and push the `.gem` file to [rubygems.org](https://rubygems.org).
 ## Contributing
 
 Bug reports and pull requests are welcome on GitHub at
-https://github.com/segiddins/arugula.
+<https://github.com/segiddins/arugula>.
 This project is intended to be a safe, welcoming space for collaboration,
 and contributors are expected to adhere to the
 [Contributor Covenant](http://contributor-covenant.org) code of conduct.

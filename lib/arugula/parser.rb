@@ -120,7 +120,7 @@ class Arugula
     end
 
     def push_capture
-      push_part(:capture, @captures.size.succ.to_s)
+      push_part(:capture, @captures.size.succ)
       @captures << state
       push_part(:and)
     end

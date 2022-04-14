@@ -26,6 +26,7 @@ describe Arugula do
     '' => 'I like pizza.',
     '[()\\[\\].-]\\.' => 'hi',
     'foo[a-z]?' => 'food?',
+    'fo[a-z]?' => 'fo?',
     'a(b)?c' => 'factual',
     'a(b)?c(d)?' => 'ab acd',
     'a{2}b{,4}c{3,}d{6,8}' => 'a' * 2 + 'b' * 3 + 'c' * 4 + 'd' * 7,
@@ -36,16 +37,26 @@ describe Arugula do
     '(food\Z)' => "bar food\n",
     '(foody\Z)' => 'bar foody',
     '[^abc]' => 'abcd',
-    # '<.*>' => '<a>foo</a>',
-    # '<.+>' => '<a>foo</a>',
-    # '<.{1,}>' => '<a>foo</a>',
-    # 'foo(A{,1}+)Abar' => 'fooAAAbar',
+    '<.*>' => '<a>foo</a>',
+    '<.+>' => '<a>foo</a>',
+    'a(.*)>' => '<a>foo</a>',
+    '<.{1,}>' => '<a>foo</a>',
+    'foo(A{,1}+)Abar' => 'fooAAAbar',
+    'foo(A{,1}+)Aba' => 'fooAbar',
+    'foo(A{,1}+)Ab' => 'fooAAbar',
+    '^.{2}*$' => '1212',
+    '^.{3}*$' => '12312',
   }.each do |pattern, string|
     ruby_pattern = "/#{pattern}/"
     match_data_methods = %i(
       itself
       to_a to_s inspect post_match pre_match
       captures length size string regexp
+      named_captures names
+    )
+    match_data_index_methods = %i(
+      []
+      begin end match match_length offset values_at
     )
     regexp = Regexp.new(pattern)
     expected_match = regexp.match(string)
@@ -69,11 +80,23 @@ describe Arugula do
           expect(match).to eq(expected_match)
         end
 
-        match_data_methods.each do |m|
-          it "returns the correct value for #{m}" do
-            expect(match.send(m)).to eq(expected_match.send(m))
+        unless expected_match.nil?
+          match_data_methods.each do |m|
+            it "returns the correct value for #{m}" do
+              expect(match.send(m)).to eq(expected_match.send(m))
+            end
           end
-        end unless expected_match.nil?
+
+          match_data_index_methods.each do |m|
+            describe "calling ##{m}" do
+              expected_match.size.times do |idx|
+                it "returns the correct value for .(#{idx.inspect})" do
+                  expect(match.send(m, idx)).to eq(expected_match.send(m, idx))
+                end
+              end
+            end
+          end
+        end
       end
     end
   end

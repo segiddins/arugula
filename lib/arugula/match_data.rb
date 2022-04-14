@@ -1,29 +1,16 @@
 class Arugula
   class MatchData
     attr_reader :string, :regexp
-    def initialize(regexp, string)
-      # require "awesome_print"
-      # ap regexp, raw: true
+    def initialize(regexp, string, captures, start_index, end_index)
       @regexp = regexp
       @string = string.dup.freeze
-      @captures = Hash[regexp.captures.map { |c| [c.name, nil] }]
+      @captures = regexp.captures.to_h { [_1.name, nil] }.merge(captures).freeze
+      @start_index = start_index
+      @end_index = end_index
     end
-
-    def add_capture(name, start_index, end_index)
-      @captures[name] = start_index...end_index
-    end
-
-    def reset_captures!
-      @captures.keys.each do |key|
-        @captures[key] = nil
-      end
-    end
-
-    attr_accessor :start_index
-    attr_accessor :end_index
 
     def to_s
-      @string[start_index...end_index]
+      @string[@start_index...@end_index]
     end
 
     def inspect
@@ -47,18 +34,41 @@ class Arugula
     end
 
     def pre_match
-      return '' if start_index == 0
-      @string[0...start_index]
+      return '' if @start_index == 0
+      @string[0...@start_index]
     end
 
     def post_match
-      return '' if end_index == string.size
-      @string[end_index..-1]
+      return '' if @end_index == string.size
+      @string[@end_index..-1]
     end
 
-    def freeze
-      @captures.freeze
-      super
+    def names = []
+    def named_captures = {}
+
+    def [](idx)
+      idx.zero? ? to_s : captures[idx - 1]
+    end
+    alias match []
+  
+    def begin(idx)
+      idx.zero? ? @start_index : @captures[idx]&.begin
+    end
+  
+    def end(idx)
+      idx.zero? ? @end_index : @captures[idx]&.end
+    end
+
+    def match_length(idx)
+      idx.zero? ? @end_index - @start_index : @captures[idx]&.size
+    end
+
+    def offset(idx)
+      [self.begin(idx), self.end(idx)]
+    end
+
+    def values_at(*idx)
+      idx.map { match(_1) }
     end
 
     def hash
